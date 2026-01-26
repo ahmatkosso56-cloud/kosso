@@ -1,0 +1,57 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  pageName  String?   @unique
+  createdAt DateTime  @default(now())
+  services  Service[]
+  posts     Post[]
+  ticketSeq Int       @default(0)
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  name            String
+  avgTime         Int
+  companyId       String
+  supportsUrgency Boolean  @default(false)
+  company         Company  @relation(fields: [companyId], references: [id])
+  tickets         Ticket[]
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  name      String
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  tickets   Ticket[]
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id            String   @id @default(uuid())
+  serviceId     String
+  num           String   @unique
+  nameComplete  String
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  postName      String?
+  postId        String?
+  post          Post?    @relation(fields: [postId], references: [id])
+  customerPhone String?
+  isUrgent      Boolean  @default(false)
+
+  @@index([status, isUrgent, createdAt])
+  @@index([customerPhone, createdAt])
+}
