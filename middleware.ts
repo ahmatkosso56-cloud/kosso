@@ -3,9 +3,9 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
-  '/page(.*)',
-  '/queue(.*)',   // page QR publique
-  '/client(.*)',  // page client publique
+  '/page/:path*',   // ← FIX IMPORTANT
+  '/queue/:path*',
+  '/client/:path*',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
@@ -15,7 +15,6 @@ export default clerkMiddleware(async (auth, request) => {
     }
   } catch (err) {
     console.log('Clerk dev fallback:', err)
-    // fallback dev : laisse passer
   }
 })
 
