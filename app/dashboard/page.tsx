@@ -1,18 +1,23 @@
 "use client";
+
 import React, { useEffect, useState, useCallback } from "react";
 import Wrapper from "../components/Wrapper";
 import { useUser } from "@clerk/nextjs";
+
 import {
   get10LstFinishedTicketsByEmail,
   getTicketStatsByEmail,
 } from "../actions";
+
+import { ensureCompany } from "../actions/company";
+
 import { Ticket } from "@/type";
 import EmptyState from "../components/EmptyState";
 import TicketComponent from "../components/TicketComponent";
 
 const StatCard = ({ title, value }: { title: string; value: number }) => {
   return (
-    <div className="stats  md:w-1/3 border border-base-200">
+    <div className="stats md:w-1/3 border border-base-200">
       <div className="stat">
         <div className="stat-title">{title}</div>
         <div className="stat-value">{value}</div>
@@ -22,15 +27,11 @@ const StatCard = ({ title, value }: { title: string; value: number }) => {
 };
 
 const Page = () => {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress;
-  const [tickets, setTickets] = useState<Ticket[]>([]);
 
-  const [stats, setStats] = useState<{
-    totalTickets: number;
-    resolvedTickets: number;
-    pendingTickets: number;
-  }>({
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [stats, setStats] = useState({
     totalTickets: 0,
     resolvedTickets: 0,
     pendingTickets: 0,
@@ -39,9 +40,9 @@ const Page = () => {
   const fetchTicketsAndStats = useCallback(async () => {
     if (!email) return;
 
-    const data = await get10LstFinishedTicketsByEmail(email);
-    if (data) {
-      setTickets(data);
+    const ticketsData = await get10LstFinishedTicketsByEmail(email);
+    if (ticketsData) {
+      setTickets(ticketsData);
     }
 
     const statsData = await getTicketStatsByEmail(email);
@@ -51,8 +52,18 @@ const Page = () => {
   }, [email]);
 
   useEffect(() => {
-    fetchTicketsAndStats();
-  }, [fetchTicketsAndStats]);
+    if (!isLoaded || !email) return;
+
+    const init = async () => {
+      // 🔥 CRITIQUE : crée la company si elle n’existe pas
+      await ensureCompany();
+
+      // 🔁 puis charge les stats et tickets
+      await fetchTicketsAndStats();
+    };
+
+    init();
+  }, [isLoaded, email, fetchTicketsAndStats]);
 
   return (
     <Wrapper>
@@ -64,18 +75,24 @@ const Page = () => {
         <StatCard title="Tickets En Attente" value={stats.pendingTickets} />
       </div>
 
-      <h1 className="text-2xl font-bold mb-4">Les derniers Tickets servis</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        Les derniers Tickets servis
+      </h1>
 
       {tickets.length === 0 ? (
-        <div>
-          <EmptyState message={"Aucun ticket en attente"} IconComponent="Bird" />
-        </div>
+        <EmptyState
+          message="Aucun ticket en attente"
+          IconComponent="Bird"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {tickets.map((ticket, index) => {
             const totalWaitTime = tickets
               .slice(0, index)
-              .reduce((acc, prevTicket) => acc + prevTicket.avgTime, 0);
+              .reduce(
+                (acc, prevTicket) => acc + prevTicket.avgTime,
+                0
+              );
 
             return (
               <TicketComponent
