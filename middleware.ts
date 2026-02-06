@@ -1,26 +1,21 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware } from '@clerk/nextjs/server'
 
-const isPublicRoute = createRouteMatcher([
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/page/:path*',   // ← FIX IMPORTANT
-  '/queue/:path*',
-  '/client/:path*',
-])
+export default clerkMiddleware((auth, req) => {
+  const publicRoutes = [
+    /^\/sign-in/,
+    /^\/sign-up/,
+    /^\/page\/.*/,   // ← IMPORTANT
+    /^\/queue\/.*/,
+    /^\/client\/.*/,
+  ]
 
-export default clerkMiddleware(async (auth, request) => {
-  try {
-    if (!isPublicRoute(request)) {
-      await auth.protect()
-    }
-  } catch (err) {
-    console.log('Clerk dev fallback:', err)
+  const isPublic = publicRoutes.some((r) => r.test(req.nextUrl.pathname))
+
+  if (!isPublic) {
+    auth.protect()
   }
 })
 
 export const config = {
-  matcher: [
-    '/((?!_next|.*\\..*).*)',
-    '/(api|trpc)(.*)',
-  ],
+  matcher: ['/((?!_next|.*\\..*).*)'],
 }
