@@ -4,6 +4,8 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/page(.*)',
+  '/queue(.*)',   // page QR publique
+  '/client(.*)',  // page client publique
 ])
 
 export default clerkMiddleware(async (auth, request) => {
@@ -13,7 +15,7 @@ export default clerkMiddleware(async (auth, request) => {
     }
   } catch (err) {
     console.log('Clerk dev fallback:', err)
-    // On laisse passer en dev au lieu de crash
+    // fallback dev : laisse passer
   }
 })
 
