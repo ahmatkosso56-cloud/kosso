@@ -1,19 +1,19 @@
 import { clerkMiddleware } from '@clerk/nextjs/server'
 
 export default clerkMiddleware((auth, req) => {
-  const publicRoutes = [
-    /^\/sign-in/,
-    /^\/sign-up/,
-    /^\/page\/.*/,   // ← IMPORTANT
-    /^\/queue\/.*/,
-    /^\/client\/.*/,
-  ]
+  const pathname = req.nextUrl.pathname
 
-  const isPublic = publicRoutes.some((r) => r.test(req.nextUrl.pathname))
-
-  if (!isPublic) {
-    auth.protect()
+  // pages publiques
+  if (
+    pathname.startsWith('/page/') ||
+    pathname.startsWith('/queue/') ||
+    pathname.startsWith('/client/')
+  ) {
+    return
   }
+
+  // tout le reste = protégé
+  auth.protect()
 })
 
 export const config = {
