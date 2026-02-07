@@ -3,7 +3,7 @@ import { clerkMiddleware } from '@clerk/nextjs/server'
 export default clerkMiddleware((auth, req) => {
   const pathname = req.nextUrl.pathname
 
-  // routes publiques
+  // show pages publiques
   if (
     pathname.startsWith('/sign-in') ||
     pathname.startsWith('/sign-up') ||
