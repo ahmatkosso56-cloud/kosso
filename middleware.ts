@@ -3,8 +3,10 @@ import { clerkMiddleware } from '@clerk/nextjs/server'
 export default clerkMiddleware((auth, req) => {
   const pathname = req.nextUrl.pathname
 
-  // pages publiques
+  // routes publiques
   if (
+    pathname.startsWith('/sign-in') ||
+    pathname.startsWith('/sign-up') ||
     pathname.startsWith('/page/') ||
     pathname.startsWith('/queue/') ||
     pathname.startsWith('/client/')
@@ -12,7 +14,7 @@ export default clerkMiddleware((auth, req) => {
     return
   }
 
-  // tout le reste = protégé
+  // le reste protégé
   auth.protect()
 })
 
